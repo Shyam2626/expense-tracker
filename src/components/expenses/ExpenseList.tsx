@@ -1,0 +1,309 @@
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Edit2, Trash2 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+
+interface ExpenseListProps {
+  expenses: any[];
+  categories: any[];
+  subCategories: any[];
+  year: number;
+  onSuccess: () => void;
+}
+
+const ExpenseList = ({ expenses, categories, subCategories, year, onSuccess }: ExpenseListProps) => {
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editExpense, setEditExpense] = useState<any>(null);
+  const [editAmount, setEditAmount] = useState("");
+  const [editCategoryId, setEditCategoryId] = useState("");
+  const [editSubCategoryId, setEditSubCategoryId] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+
+    const { error } = await supabase
+      .from("expenses")
+      .delete()
+      .eq("id", deleteId);
+
+    if (error) {
+      toast({ title: "Error deleting expense", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Expense deleted successfully" });
+      onSuccess();
+    }
+    setDeleteId(null);
+  };
+
+  const handleEdit = (expense: any) => {
+    setEditExpense(expense);
+    setEditAmount(expense.amount.toString());
+    setEditCategoryId(expense.category_id);
+    setEditSubCategoryId(expense.sub_category_id || "");
+    setEditDescription(expense.description || "");
+    setEditDate(expense.expense_date);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editExpense || !editAmount || !editCategoryId) return;
+
+    setIsSubmitting(true);
+    const { error } = await supabase
+      .from("expenses")
+      .update({
+        amount: parseFloat(editAmount),
+        category_id: editCategoryId,
+        sub_category_id: editSubCategoryId || null,
+        description: editDescription || null,
+        expense_date: editDate,
+      })
+      .eq("id", editExpense.id);
+
+    setIsSubmitting(false);
+    if (error) {
+      toast({ title: "Error updating expense", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Expense updated successfully" });
+      setEditExpense(null);
+      onSuccess();
+    }
+  };
+
+  const filteredSubCategories = subCategories.filter(
+    sc => sc.category_id === editCategoryId
+  );
+
+  const sortedExpenses = [...expenses].sort(
+    (a, b) => new Date(b.expense_date).getTime() - new Date(a.expense_date).getTime()
+  );
+
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Expense Entries - {year}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {sortedExpenses.length === 0 ? (
+            <p className="text-muted-foreground text-center py-4">No expenses yet</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Subcategory</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedExpenses.map((expense) => {
+                    const category = categories.find(c => c.id === expense.category_id);
+                    const subCategory = subCategories.find(sc => sc.id === expense.sub_category_id);
+                    return (
+                      <TableRow key={expense.id}>
+                        <TableCell>
+                          {new Date(expense.expense_date).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>{category?.name || "Unknown"}</TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {subCategory?.name || "-"}
+                        </TableCell>
+                        <TableCell className="max-w-xs truncate text-muted-foreground">
+                          {expense.description || "-"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(Number(expense.amount))}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEdit(expense)}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setDeleteId(expense.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editExpense} onOpenChange={() => setEditExpense(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Expense</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleUpdate} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="editAmount">Amount *</Label>
+              <Input
+                id="editAmount"
+                type="number"
+                step="0.01"
+                value={editAmount}
+                onChange={(e) => setEditAmount(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="editCategory">Category *</Label>
+              <Select value={editCategoryId} onValueChange={(val) => { 
+                setEditCategoryId(val); 
+                setEditSubCategoryId("");
+              }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {filteredSubCategories.length > 0 && (
+              <div className="space-y-2">
+                <Label htmlFor="editSubCategory">Subcategory</Label>
+                <Select value={editSubCategoryId} onValueChange={setEditSubCategoryId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select subcategory (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    {filteredSubCategories.map((sub) => (
+                      <SelectItem key={sub.id} value={sub.id}>
+                        {sub.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="editDate">Date</Label>
+              <Input
+                id="editDate"
+                type="date"
+                value={editDate}
+                onChange={(e) => setEditDate(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="editDescription">Description</Label>
+              <Input
+                id="editDescription"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="Optional description"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button type="submit" className="flex-1" disabled={isSubmitting}>
+                {isSubmitting ? "Updating..." : "Update"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditExpense(null)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Expense?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this expense entry. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+};
+
+export default ExpenseList;
+

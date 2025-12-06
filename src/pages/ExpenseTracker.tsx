@@ -15,6 +15,9 @@ import SpendingChart from "@/components/expenses/SpendingChart";
 import TrendChart from "@/components/expenses/TrendChart";
 import MonthlyComparisonChart from "@/components/expenses/MonthlyComparisonChart";
 import CarryoverDialog from "@/components/expenses/CarryoverDialog";
+import IncomeList from "@/components/expenses/IncomeList";
+import ExpenseList from "@/components/expenses/ExpenseList";
+import CarryoverList from "@/components/expenses/CarryoverList";
 import { useExpenseData } from "@/hooks/useExpenseData";
 
 const ExpenseTracker = () => {
@@ -140,6 +143,31 @@ const ExpenseTracker = () => {
             income={income}
             expenses={expenses}
             year={selectedYear}
+          />
+        </div>
+
+        {/* Lists with Edit/Delete */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+          <IncomeList
+            income={income}
+            incomeCategories={incomeCategories}
+            year={selectedYear}
+            onSuccess={refetch}
+          />
+          <CarryoverList
+            carryovers={carryovers}
+            year={selectedYear}
+            onSuccess={refetch}
+          />
+        </div>
+
+        <div className="mt-8">
+          <ExpenseList
+            expenses={expenses}
+            categories={categories}
+            subCategories={subCategories}
+            year={selectedYear}
+            onSuccess={refetch}
           />
         </div>
 

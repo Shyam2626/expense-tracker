@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Edit2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,6 +34,8 @@ const IncomeCategoryManager = ({ open, onOpenChange, userId, incomeCategories, o
   const [newCategoryName, setNewCategoryName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editCategory, setEditCategory] = useState<any>(null);
+  const [editName, setEditName] = useState("");
 
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +77,31 @@ const IncomeCategoryManager = ({ open, onOpenChange, userId, incomeCategories, o
     setDeleteId(null);
   };
 
+  const handleEdit = (category: any) => {
+    setEditCategory(category);
+    setEditName(category.name);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editCategory || !editName.trim()) return;
+
+    setIsSubmitting(true);
+    const { error } = await supabase
+      .from("income_categories")
+      .update({ name: editName.trim() })
+      .eq("id", editCategory.id);
+
+    setIsSubmitting(false);
+    if (error) {
+      toast({ title: "Error updating category", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Income category updated successfully" });
+      setEditCategory(null);
+      onSuccess();
+    }
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -114,13 +141,22 @@ const IncomeCategoryManager = ({ open, onOpenChange, userId, incomeCategories, o
                       className="flex items-center justify-between p-3 border rounded-lg"
                     >
                       <span className="font-medium">{category.name}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeleteId(category.id)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(category)}
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteId(category.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </div>
                   ))
                 )}
@@ -130,6 +166,40 @@ const IncomeCategoryManager = ({ open, onOpenChange, userId, incomeCategories, o
         </DialogContent>
       </Dialog>
 
+      {/* Edit Dialog */}
+      <Dialog open={!!editCategory} onOpenChange={() => setEditCategory(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Income Category</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleUpdate} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="editName">Category Name</Label>
+              <Input
+                id="editName"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="e.g., Salary, Stocks, Freelancing"
+                required
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button type="submit" className="flex-1" disabled={isSubmitting}>
+                {isSubmitting ? "Updating..." : "Update"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditCategory(null)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Dialog */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
