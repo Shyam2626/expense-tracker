@@ -28,6 +28,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -47,6 +54,7 @@ const CarryoverList = ({ carryovers, year, onSuccess }: CarryoverListProps) => {
   const [editCarryover, setEditCarryover] = useState<any>(null);
   const [editAmount, setEditAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState<string>("all");
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-IN", {
@@ -98,17 +106,38 @@ const CarryoverList = ({ carryovers, year, onSuccess }: CarryoverListProps) => {
     }
   };
 
-  const sortedCarryovers = [...carryovers].sort((a, b) => a.month - b.month);
+  const filteredCarryovers = selectedMonth === "all"
+    ? carryovers
+    : carryovers.filter(c => c.month === parseInt(selectedMonth));
+
+  const sortedCarryovers = [...filteredCarryovers].sort((a, b) => a.month - b.month);
 
   return (
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Carryover Entries - {year}</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Carryover Entries - {year}</CardTitle>
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Months</SelectItem>
+                {MONTHS.map((month, idx) => (
+                  <SelectItem key={idx + 1} value={(idx + 1).toString()}>
+                    {month}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
           {sortedCarryovers.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">No carryover entries yet</p>
+            <p className="text-muted-foreground text-center py-4">
+              No carryover entries {selectedMonth !== "all" ? `for ${MONTHS[parseInt(selectedMonth) - 1]}` : "yet"}
+            </p>
           ) : (
             <div className="overflow-x-auto">
               <Table>

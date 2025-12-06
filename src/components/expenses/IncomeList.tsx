@@ -3,6 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Edit2, Trash2 } from "lucide-react";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -56,6 +63,7 @@ const IncomeList = ({ income, incomeCategories, year, onSuccess }: IncomeListPro
   const [editAmount, setEditAmount] = useState("");
   const [editCategoryId, setEditCategoryId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState<string>("all");
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-IN", {
@@ -111,17 +119,38 @@ const IncomeList = ({ income, incomeCategories, year, onSuccess }: IncomeListPro
     }
   };
 
-  const sortedIncome = [...income].sort((a, b) => a.month - b.month);
+  const filteredIncome = selectedMonth === "all" 
+    ? income 
+    : income.filter(i => i.month === parseInt(selectedMonth));
+  
+  const sortedIncome = [...filteredIncome].sort((a, b) => a.month - b.month);
 
   return (
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Income Entries - {year}</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Income Entries - {year}</CardTitle>
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Months</SelectItem>
+                {MONTHS.map((month, idx) => (
+                  <SelectItem key={idx + 1} value={(idx + 1).toString()}>
+                    {month}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
           {sortedIncome.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">No income entries yet</p>
+            <p className="text-muted-foreground text-center py-4">
+              No income entries {selectedMonth !== "all" ? `for ${MONTHS[parseInt(selectedMonth) - 1]}` : "yet"}
+            </p>
           ) : (
             <div className="overflow-x-auto">
               <Table>

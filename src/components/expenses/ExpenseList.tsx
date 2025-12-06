@@ -46,6 +46,11 @@ interface ExpenseListProps {
   onSuccess: () => void;
 }
 
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+
 const ExpenseList = ({ expenses, categories, subCategories, year, onSuccess }: ExpenseListProps) => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editExpense, setEditExpense] = useState<any>(null);
@@ -55,6 +60,7 @@ const ExpenseList = ({ expenses, categories, subCategories, year, onSuccess }: E
   const [editDescription, setEditDescription] = useState("");
   const [editDate, setEditDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState<string>("all");
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-IN", {
@@ -120,7 +126,14 @@ const ExpenseList = ({ expenses, categories, subCategories, year, onSuccess }: E
     sc => sc.category_id === editCategoryId
   );
 
-  const sortedExpenses = [...expenses].sort(
+  const filteredExpenses = selectedMonth === "all"
+    ? expenses
+    : expenses.filter(e => {
+        const expenseMonth = new Date(e.expense_date).getMonth() + 1;
+        return expenseMonth === parseInt(selectedMonth);
+      });
+
+  const sortedExpenses = [...filteredExpenses].sort(
     (a, b) => new Date(b.expense_date).getTime() - new Date(a.expense_date).getTime()
   );
 
@@ -128,11 +141,28 @@ const ExpenseList = ({ expenses, categories, subCategories, year, onSuccess }: E
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Expense Entries - {year}</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Expense Entries - {year}</CardTitle>
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Months</SelectItem>
+                {MONTHS.map((month, idx) => (
+                  <SelectItem key={idx + 1} value={(idx + 1).toString()}>
+                    {month}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
           {sortedExpenses.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">No expenses yet</p>
+            <p className="text-muted-foreground text-center py-4">
+              No expenses {selectedMonth !== "all" ? `for ${MONTHS[parseInt(selectedMonth) - 1]}` : "yet"}
+            </p>
           ) : (
             <div className="overflow-x-auto">
               <Table>
