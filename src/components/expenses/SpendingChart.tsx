@@ -8,10 +8,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface SpendingChartProps {
   expenses: any[];
   categories: any[];
+  subCategories: any[];
   year: number;
 }
 
@@ -31,7 +38,7 @@ const MONTHS = [
   "July", "August", "September", "October", "November", "December"
 ];
 
-const SpendingChart = ({ expenses, categories, year }: SpendingChartProps) => {
+const SpendingChart = ({ expenses, categories, subCategories, year }: SpendingChartProps) => {
   const [selectedMonth, setSelectedMonth] = useState("all");
 
   const getChartData = () => {
@@ -56,6 +63,31 @@ const SpendingChart = ({ expenses, categories, year }: SpendingChartProps) => {
       name,
       value,
     }));
+  };
+
+  const getCategoryDetails = (categoryName: string) => {
+    let filteredExpenses = expenses;
+
+    if (selectedMonth !== "all") {
+      const monthNum = parseInt(selectedMonth);
+      filteredExpenses = expenses.filter(e => {
+        const expenseMonth = new Date(e.expense_date).getMonth() + 1;
+        return expenseMonth === monthNum;
+      });
+    }
+
+    const cat = categories.find(c => c.name === categoryName);
+    if (!cat) return [];
+
+    return filteredExpenses
+      .filter(e => e.category_id === cat.id)
+      .map(e => {
+        const subCat = subCategories.find(sc => sc.id === e.sub_category_id);
+        return {
+          ...e,
+          subCategoryName: subCat?.name || null,
+        };
+      });
   };
 
   const chartData = getChartData();
@@ -120,20 +152,57 @@ const SpendingChart = ({ expenses, categories, year }: SpendingChartProps) => {
                 </PieChart>
               </ResponsiveContainer>
             </div>
-            <div className="mt-4 space-y-2">
-              {chartData.map((item, index) => (
-                <div key={item.name} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                    />
-                    <span>{item.name}</span>
-                  </div>
-                  <span className="font-medium">{formatCurrency(item.value)}</span>
-                </div>
-              ))}
-              <div className="pt-2 border-t border-border flex items-center justify-between font-semibold">
+            <div className="mt-4">
+              <Accordion type="single" collapsible className="w-full">
+                {chartData.map((item, index) => {
+                  const details = getCategoryDetails(item.name);
+                  return (
+                    <AccordionItem key={item.name} value={item.name}>
+                      <AccordionTrigger className="hover:no-underline">
+                        <div className="flex items-center justify-between w-full pr-2">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-3 h-3 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                            />
+                            <span className="text-sm">{item.name}</span>
+                          </div>
+                          <span className="font-medium text-sm">{formatCurrency(item.value)}</span>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="pl-5 space-y-2 pt-2">
+                          {details.map((expense) => (
+                            <div key={expense.id} className="text-xs space-y-1 pb-2 border-b last:border-0">
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  {expense.subCategoryName && (
+                                    <div className="font-medium text-muted-foreground">
+                                      {expense.subCategoryName}
+                                    </div>
+                                  )}
+                                  {expense.description && (
+                                    <div className="text-muted-foreground mt-1">
+                                      {expense.description}
+                                    </div>
+                                  )}
+                                  <div className="text-muted-foreground mt-1">
+                                    {new Date(expense.expense_date).toLocaleDateString()}
+                                  </div>
+                                </div>
+                                <div className="font-medium ml-2">
+                                  {formatCurrency(Number(expense.amount))}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  );
+                })}
+              </Accordion>
+              <div className="pt-4 border-t border-border flex items-center justify-between font-semibold">
                 <span>Total</span>
                 <span>{formatCurrency(totalSpent)}</span>
               </div>

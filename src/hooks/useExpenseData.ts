@@ -2,6 +2,24 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useExpenseData = (year: number, userId: string | undefined) => {
+  // Fetch income data (replacing salaries)
+  const { data: income = [], refetch: refetchIncome } = useQuery({
+    queryKey: ["income", year, userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const { data, error } = await supabase
+        .from("monthly_income")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("year", year)
+        .order("month", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!userId,
+  });
+
+  // Also fetch old salary data for backward compatibility
   const { data: salaries = [], refetch: refetchSalaries } = useQuery({
     queryKey: ["salaries", year, userId],
     queryFn: async () => {
@@ -67,20 +85,57 @@ export const useExpenseData = (year: number, userId: string | undefined) => {
     enabled: !!userId,
   });
 
+  const { data: incomeCategories = [], refetch: refetchIncomeCategories } = useQuery({
+    queryKey: ["income_categories", userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const { data, error } = await supabase
+        .from("income_categories")
+        .select("*")
+        .eq("user_id", userId)
+        .order("name", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!userId,
+  });
+
+  const { data: carryovers = [], refetch: refetchCarryovers } = useQuery({
+    queryKey: ["carryovers", year, userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const { data, error } = await supabase
+        .from("monthly_carryover")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("year", year)
+        .order("month", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!userId,
+  });
+
   const refetch = () => {
+    refetchIncome();
     refetchSalaries();
     refetchExpenses();
     refetchCategories();
     refetchSubCategories();
+    refetchIncomeCategories();
+    refetchCarryovers();
   };
 
   const isLoading = !userId;
 
   return {
+    income,
     salaries,
     expenses,
     categories,
     subCategories,
+    incomeCategories,
+    carryovers,
     isLoading,
     refetch,
   };

@@ -13,7 +13,9 @@ interface YearSelectorProps {
 
 const YearSelector = ({ selectedYear, onYearChange }: YearSelectorProps) => {
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 10 }, (_, i) => currentYear - 5 + i);
+  const startYear = 2025;
+  const endYear = Math.max(currentYear, startYear);
+  const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i);
 
   return (
     <div className="flex items-center gap-3">

@@ -3,13 +3,13 @@ import { DollarSign, TrendingDown, Wallet } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface YearSummaryProps {
-  totalSalary: number;
+  totalIncome: number;
   totalSpent: number;
   remaining: number;
   isLoading: boolean;
 }
 
-const YearSummary = ({ totalSalary, totalSpent, remaining, isLoading }: YearSummaryProps) => {
+const YearSummary = ({ totalIncome, totalSpent, remaining, isLoading }: YearSummaryProps) => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-IN", {
       style: "currency",
@@ -42,8 +42,8 @@ const YearSummary = ({ totalSalary, totalSpent, remaining, isLoading }: YearSumm
               <DollarSign className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Total Salary</p>
-              <p className="text-2xl font-bold text-foreground">{formatCurrency(totalSalary)}</p>
+              <p className="text-sm text-muted-foreground">Total Income</p>
+              <p className="text-2xl font-bold text-foreground">{formatCurrency(totalIncome)}</p>
             </div>
           </div>
         </CardContent>
