@@ -14,7 +14,7 @@ interface YearSelectorProps {
 const YearSelector = ({ selectedYear, onYearChange }: YearSelectorProps) => {
   const currentYear = new Date().getFullYear();
   const startYear = 2025;
-  const endYear = Math.max(currentYear, startYear);
+  const endYear = currentYear + 1; // Allow next year for planning
   const years = Array.from({ length: endYear - startYear + 1 }, (_, i) => startYear + i);
 
   return (

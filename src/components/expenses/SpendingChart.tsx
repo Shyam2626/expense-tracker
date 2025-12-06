@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import {
   Accordion,
   AccordionContent,
@@ -39,19 +39,40 @@ const MONTHS = [
 ];
 
 const SpendingChart = ({ expenses, categories, subCategories, year }: SpendingChartProps) => {
-  const [selectedMonth, setSelectedMonth] = useState("all");
+  const currentMonth = new Date().getMonth() + 1;
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth.toString());
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   const getChartData = () => {
     let filteredExpenses = expenses;
 
+    // Filter by month
     if (selectedMonth !== "all") {
       const monthNum = parseInt(selectedMonth);
-      filteredExpenses = expenses.filter(e => {
+      filteredExpenses = filteredExpenses.filter(e => {
         const expenseMonth = new Date(e.expense_date).getMonth() + 1;
         return expenseMonth === monthNum;
       });
     }
 
+    // If category is selected, show subcategories breakdown
+    if (selectedCategory !== "all") {
+      filteredExpenses = filteredExpenses.filter(e => e.category_id === selectedCategory);
+      
+      const subCategoryTotals: { [key: string]: number } = {};
+      filteredExpenses.forEach(expense => {
+        const subCat = subCategories.find(sc => sc.id === expense.sub_category_id);
+        const subCatName = subCat?.name || "No Subcategory";
+        subCategoryTotals[subCatName] = (subCategoryTotals[subCatName] || 0) + Number(expense.amount);
+      });
+
+      return Object.entries(subCategoryTotals).map(([name, value]) => ({
+        name,
+        value,
+      }));
+    }
+
+    // Otherwise show categories
     const categoryTotals: { [key: string]: number } = {};
     filteredExpenses.forEach(expense => {
       const cat = categories.find(c => c.id === expense.category_id);
@@ -68,14 +89,50 @@ const SpendingChart = ({ expenses, categories, subCategories, year }: SpendingCh
   const getCategoryDetails = (categoryName: string) => {
     let filteredExpenses = expenses;
 
+    // Filter by month
     if (selectedMonth !== "all") {
       const monthNum = parseInt(selectedMonth);
-      filteredExpenses = expenses.filter(e => {
+      filteredExpenses = filteredExpenses.filter(e => {
         const expenseMonth = new Date(e.expense_date).getMonth() + 1;
         return expenseMonth === monthNum;
       });
     }
 
+    // If a specific category is selected, show its expenses
+    if (selectedCategory !== "all") {
+      filteredExpenses = filteredExpenses.filter(e => e.category_id === selectedCategory);
+      
+      // Group by subcategory name for display
+      const subCat = subCategories.find(sc => sc.name === categoryName);
+      if (subCat) {
+        return filteredExpenses
+          .filter(e => e.sub_category_id === subCat.id)
+          .map(e => ({
+            ...e,
+            subCategoryName: categoryName,
+          }));
+      }
+      
+      // Or show expenses without subcategory if categoryName is "No Subcategory"
+      if (categoryName === "No Subcategory") {
+        return filteredExpenses
+          .filter(e => !e.sub_category_id)
+          .map(e => ({
+            ...e,
+            subCategoryName: null,
+          }));
+      }
+      
+      return filteredExpenses.map(e => {
+        const subCat = subCategories.find(sc => sc.id === e.sub_category_id);
+        return {
+          ...e,
+          subCategoryName: subCat?.name || null,
+        };
+      });
+    }
+
+    // Otherwise, show expenses for the main category
     const cat = categories.find(c => c.name === categoryName);
     if (!cat) return [];
 
@@ -103,39 +160,54 @@ const SpendingChart = ({ expenses, categories, subCategories, year }: SpendingCh
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <CardHeader className="space-y-2 pb-2">
         <CardTitle>Spending by Category</CardTitle>
-        <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-          <SelectTrigger className="w-32">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Months</SelectItem>
-            {MONTHS.map((month, idx) => (
-              <SelectItem key={idx + 1} value={(idx + 1).toString()}>
-                {month}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2 flex-wrap">
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Month" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Months</SelectItem>
+              {MONTHS.map((month, idx) => (
+                <SelectItem key={idx + 1} value={(idx + 1).toString()}>
+                  {month}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map((cat) => (
+                <SelectItem key={cat.id} value={cat.id}>
+                  {cat.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </CardHeader>
       <CardContent>
         {chartData.length > 0 ? (
           <>
-            <div className="h-64">
+            <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={chartData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={50}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    paddingAngle={2}
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
                     labelLine={false}
+                    label={({ name, percent }) => 
+                      percent > 0.08 ? `${(percent * 100).toFixed(0)}%` : ''
+                    }
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
                   >
                     {chartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

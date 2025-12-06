@@ -42,16 +42,34 @@ interface ExpenseListProps {
   expenses: any[];
   categories: any[];
   subCategories: any[];
+  income: any[];
   year: number;
   onSuccess: () => void;
 }
 
 const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
-const ExpenseList = ({ expenses, categories, subCategories, year, onSuccess }: ExpenseListProps) => {
+const ExpenseList = ({
+  expenses,
+  categories,
+  subCategories,
+  income,
+  year,
+  onSuccess,
+}: ExpenseListProps) => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editExpense, setEditExpense] = useState<any>(null);
   const [editAmount, setEditAmount] = useState("");
@@ -60,7 +78,10 @@ const ExpenseList = ({ expenses, categories, subCategories, year, onSuccess }: E
   const [editDescription, setEditDescription] = useState("");
   const [editDate, setEditDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState<string>("all");
+  const currentMonth = new Date().getMonth() + 1;
+  const [selectedMonth, setSelectedMonth] = useState<string>(
+    currentMonth.toString()
+  );
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-IN", {
@@ -79,7 +100,11 @@ const ExpenseList = ({ expenses, categories, subCategories, year, onSuccess }: E
       .eq("id", deleteId);
 
     if (error) {
-      toast({ title: "Error deleting expense", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error deleting expense",
+        description: error.message,
+        variant: "destructive",
+      });
     } else {
       toast({ title: "Expense deleted successfully" });
       onSuccess();
@@ -114,7 +139,11 @@ const ExpenseList = ({ expenses, categories, subCategories, year, onSuccess }: E
 
     setIsSubmitting(false);
     if (error) {
-      toast({ title: "Error updating expense", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error updating expense",
+        description: error.message,
+        variant: "destructive",
+      });
     } else {
       toast({ title: "Expense updated successfully" });
       setEditExpense(null);
@@ -123,26 +152,64 @@ const ExpenseList = ({ expenses, categories, subCategories, year, onSuccess }: E
   };
 
   const filteredSubCategories = subCategories.filter(
-    sc => sc.category_id === editCategoryId
+    (sc) => sc.category_id === editCategoryId
   );
 
-  const filteredExpenses = selectedMonth === "all"
-    ? expenses
-    : expenses.filter(e => {
-        const expenseMonth = new Date(e.expense_date).getMonth() + 1;
-        return expenseMonth === parseInt(selectedMonth);
-      });
+  const filteredExpenses =
+    selectedMonth === "all"
+      ? expenses
+      : expenses.filter((e) => {
+          const expenseMonth = new Date(e.expense_date).getMonth() + 1;
+          return expenseMonth === parseInt(selectedMonth);
+        });
 
   const sortedExpenses = [...filteredExpenses].sort(
-    (a, b) => new Date(b.expense_date).getTime() - new Date(a.expense_date).getTime()
+    (a, b) =>
+      new Date(b.expense_date).getTime() - new Date(a.expense_date).getTime()
   );
+
+  // Calculate totals for selected month
+  const monthExpenses = expenses.filter((e) => {
+    if (selectedMonth === "all") return true;
+    const expenseMonth = new Date(e.expense_date).getMonth() + 1;
+    return expenseMonth === parseInt(selectedMonth);
+  });
+
+  const totalSpent = monthExpenses.reduce(
+    (sum, e) => sum + Number(e.amount),
+    0
+  );
+
+  // Calculate total income for selected month
+  const monthIncome = income.filter((i) => {
+    if (selectedMonth === "all") return true;
+    return i.month === parseInt(selectedMonth);
+  });
+
+  const totalIncome = monthIncome.reduce((sum, i) => sum + Number(i.amount), 0);
 
   return (
     <>
-      <Card>
+      <Card className="flex flex-col">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Expense Entries - {year}</CardTitle>
+            <div>
+              <CardTitle>Expense Entries - {year}</CardTitle>
+              <div className="text-sm mt-1 space-x-4">
+                <span>
+                  Income:{" "}
+                  <span className="font-semibold text-green-600">
+                    {formatCurrency(totalIncome)}
+                  </span>
+                </span>
+                <span>
+                  Spent:{" "}
+                  <span className="font-semibold text-destructive">
+                    {formatCurrency(totalSpent)}
+                  </span>
+                </span>
+              </div>
+            </div>
             <Select value={selectedMonth} onValueChange={setSelectedMonth}>
               <SelectTrigger className="w-40">
                 <SelectValue />
@@ -161,10 +228,13 @@ const ExpenseList = ({ expenses, categories, subCategories, year, onSuccess }: E
         <CardContent>
           {sortedExpenses.length === 0 ? (
             <p className="text-muted-foreground text-center py-4">
-              No expenses {selectedMonth !== "all" ? `for ${MONTHS[parseInt(selectedMonth) - 1]}` : "yet"}
+              No expenses{" "}
+              {selectedMonth !== "all"
+                ? `for ${MONTHS[parseInt(selectedMonth) - 1]}`
+                : "yet"}
             </p>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-auto" style={{ maxHeight: "500px" }}>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -178,8 +248,12 @@ const ExpenseList = ({ expenses, categories, subCategories, year, onSuccess }: E
                 </TableHeader>
                 <TableBody>
                   {sortedExpenses.map((expense) => {
-                    const category = categories.find(c => c.id === expense.category_id);
-                    const subCategory = subCategories.find(sc => sc.id === expense.sub_category_id);
+                    const category = categories.find(
+                      (c) => c.id === expense.category_id
+                    );
+                    const subCategory = subCategories.find(
+                      (sc) => sc.id === expense.sub_category_id
+                    );
                     return (
                       <TableRow key={expense.id}>
                         <TableCell>
@@ -244,10 +318,13 @@ const ExpenseList = ({ expenses, categories, subCategories, year, onSuccess }: E
 
             <div className="space-y-2">
               <Label htmlFor="editCategory">Category *</Label>
-              <Select value={editCategoryId} onValueChange={(val) => { 
-                setEditCategoryId(val); 
-                setEditSubCategoryId("");
-              }}>
+              <Select
+                value={editCategoryId}
+                onValueChange={(val) => {
+                  setEditCategoryId(val);
+                  setEditSubCategoryId("");
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
@@ -264,12 +341,17 @@ const ExpenseList = ({ expenses, categories, subCategories, year, onSuccess }: E
             {filteredSubCategories.length > 0 && (
               <div className="space-y-2">
                 <Label htmlFor="editSubCategory">Subcategory</Label>
-                <Select value={editSubCategoryId} onValueChange={setEditSubCategoryId}>
+                <Select
+                  value={editSubCategoryId || "none"}
+                  onValueChange={(val) =>
+                    setEditSubCategoryId(val === "none" ? "" : val)
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select subcategory (optional)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {filteredSubCategories.map((sub) => (
                       <SelectItem key={sub.id} value={sub.id}>
                         {sub.name}
@@ -322,7 +404,8 @@ const ExpenseList = ({ expenses, categories, subCategories, year, onSuccess }: E
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Expense?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete this expense entry. This action cannot be undone.
+              This will permanently delete this expense entry. This action
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -336,4 +419,3 @@ const ExpenseList = ({ expenses, categories, subCategories, year, onSuccess }: E
 };
 
 export default ExpenseList;
-

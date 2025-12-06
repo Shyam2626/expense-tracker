@@ -50,11 +50,12 @@ const MONTHS = [
 ];
 
 const CarryoverList = ({ carryovers, year, onSuccess }: CarryoverListProps) => {
+  const currentMonth = new Date().getMonth() + 1;
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editCarryover, setEditCarryover] = useState<any>(null);
   const [editAmount, setEditAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState<string>("all");
+  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth.toString());
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-IN", {

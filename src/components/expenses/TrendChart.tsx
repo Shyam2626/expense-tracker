@@ -52,7 +52,7 @@ const TrendChart = ({ income, expenses, carryovers, year }: TrendChartProps) => 
         <CardTitle>Income vs Expenses Trend</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-80">
+        <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />

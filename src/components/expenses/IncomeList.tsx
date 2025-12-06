@@ -35,13 +35,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -58,12 +51,13 @@ const MONTHS = [
 ];
 
 const IncomeList = ({ income, incomeCategories, year, onSuccess }: IncomeListProps) => {
+  const currentMonth = new Date().getMonth() + 1;
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editIncome, setEditIncome] = useState<any>(null);
   const [editAmount, setEditAmount] = useState("");
   const [editCategoryId, setEditCategoryId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState<string>("all");
+  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth.toString());
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-IN", {

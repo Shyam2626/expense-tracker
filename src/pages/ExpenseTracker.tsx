@@ -18,20 +18,34 @@ import CarryoverDialog from "@/components/expenses/CarryoverDialog";
 import IncomeList from "@/components/expenses/IncomeList";
 import ExpenseList from "@/components/expenses/ExpenseList";
 import CarryoverList from "@/components/expenses/CarryoverList";
+import Top10ExpensesChart from "@/components/expenses/Top10ExpensesChart";
 import { useExpenseData } from "@/hooks/useExpenseData";
 
 const ExpenseTracker = () => {
   const navigate = useNavigate();
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [showCategoryManager, setShowCategoryManager] = useState(false);
-  const [showIncomeCategoryManager, setShowIncomeCategoryManager] = useState(false);
+  const [showIncomeCategoryManager, setShowIncomeCategoryManager] =
+    useState(false);
   const [user, setUser] = useState<any>(null);
 
-  const { income, salaries, expenses, categories, subCategories, incomeCategories, carryovers, isLoading, refetch } = useExpenseData(selectedYear, user?.id);
+  const {
+    income,
+    salaries,
+    expenses,
+    categories,
+    subCategories,
+    incomeCategories,
+    carryovers,
+    isLoading,
+    refetch,
+  } = useExpenseData(selectedYear, user?.id);
 
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         navigate("/auth");
       } else {
@@ -47,7 +61,10 @@ const ExpenseTracker = () => {
   };
 
   const totalIncome = income.reduce((sum, i) => sum + Number(i.amount), 0);
-  const totalCarryover = carryovers.reduce((sum, c) => sum + Number(c.amount), 0);
+  const totalCarryover = carryovers.reduce(
+    (sum, c) => sum + Number(c.amount),
+    0
+  );
   const totalSpent = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
   const remaining = totalIncome + totalCarryover - totalSpent;
 
@@ -57,7 +74,9 @@ const ExpenseTracker = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">Expense Tracker</h1>
+          <h1 className="text-2xl font-bold text-foreground">
+            Expense Tracker
+          </h1>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -83,13 +102,16 @@ const ExpenseTracker = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
-          <YearSelector selectedYear={selectedYear} onYearChange={setSelectedYear} />
+      <main className="container mx-auto px-4 py-6 max-w-7xl">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-6">
+          <YearSelector
+            selectedYear={selectedYear}
+            onYearChange={setSelectedYear}
+          />
           <div className="flex gap-2 flex-wrap">
-            <AddIncomeDialog 
-              userId={user.id} 
-              year={selectedYear} 
+            <AddIncomeDialog
+              userId={user.id}
+              year={selectedYear}
               onSuccess={refetch}
               existingIncome={income}
               incomeCategories={incomeCategories}
@@ -116,13 +138,31 @@ const ExpenseTracker = () => {
           isLoading={isLoading}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+        {/* Row 1: Expense Entries | Monthly Overview */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
+          <ExpenseList
+            expenses={expenses}
+            categories={categories}
+            subCategories={subCategories}
+            income={income}
+            year={selectedYear}
+            onSuccess={refetch}
+          />
           <MonthlyOverview
             year={selectedYear}
             income={income}
             expenses={expenses}
             carryovers={carryovers}
             isLoading={isLoading}
+          />
+        </div>
+
+        {/* Row 2: All Expenses | Spending by Category */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+          <Top10ExpensesChart
+            expenses={expenses}
+            categories={categories}
+            subCategories={subCategories}
           />
           <SpendingChart
             expenses={expenses}
@@ -132,7 +172,8 @@ const ExpenseTracker = () => {
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-8 mt-8">
+        {/* Row 3: Income vs Expenses Trend | Monthly Income vs Spending */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
           <TrendChart
             income={income}
             expenses={expenses}
@@ -146,8 +187,8 @@ const ExpenseTracker = () => {
           />
         </div>
 
-        {/* Lists with Edit/Delete */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+        {/* Row 4: Income Entries | Carryover Entries */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
           <IncomeList
             income={income}
             incomeCategories={incomeCategories}
@@ -156,16 +197,6 @@ const ExpenseTracker = () => {
           />
           <CarryoverList
             carryovers={carryovers}
-            year={selectedYear}
-            onSuccess={refetch}
-          />
-        </div>
-
-        <div className="mt-8">
-          <ExpenseList
-            expenses={expenses}
-            categories={categories}
-            subCategories={subCategories}
             year={selectedYear}
             onSuccess={refetch}
           />
