@@ -41,6 +41,16 @@ const PRESET_COLORS = [
   "#ec4899", // pink
   "#06b6d4", // cyan
   "#84cc16", // lime
+  "#E97451", // orange
+  "#4E6E81", // gray
+  "#4A90E2", // sky blue
+  "#9B59B6", // lavender
+  "#2E8B57", // sea green
+  "#D35400", // pumpkin
+  "#1ABC9C", // turquoise
+  "#F1C40F", // yellow
+  "#E74C3C", // red
+  "#3498DB", // blue
 ];
 
 const HabitCategoryManager = ({
