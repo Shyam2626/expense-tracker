@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LogOut, Settings, DollarSign } from "lucide-react";
+import { LogOut, Settings, DollarSign, CheckSquare } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import YearSelector from "@/components/expenses/YearSelector";
 import YearSummary from "@/components/expenses/YearSummary";
@@ -78,6 +78,10 @@ const ExpenseTracker = () => {
             Expense Tracker
           </h1>
           <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => navigate("/habits")}>
+              <CheckSquare className="h-4 w-4 mr-2" />
+              Habits
+            </Button>
             <Button
               variant="outline"
               size="icon"
