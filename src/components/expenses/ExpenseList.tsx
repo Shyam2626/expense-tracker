@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Edit2, Trash2 } from "lucide-react";
@@ -79,9 +79,19 @@ const ExpenseList = ({
   const [editDate, setEditDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const currentMonth = new Date().getMonth() + 1;
+  const currentYear = new Date().getFullYear();
   const [selectedMonth, setSelectedMonth] = useState<string>(
-    currentMonth.toString()
+    year === currentYear ? currentMonth.toString() : "all"
   );
+
+  // Reset month filter when year changes
+  useEffect(() => {
+    if (year === currentYear) {
+      setSelectedMonth(currentMonth.toString());
+    } else {
+      setSelectedMonth("all");
+    }
+  }, [year, currentYear, currentMonth]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-IN", {

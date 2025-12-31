@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Edit2, Trash2 } from "lucide-react";
@@ -51,11 +51,23 @@ const MONTHS = [
 
 const CarryoverList = ({ carryovers, year, onSuccess }: CarryoverListProps) => {
   const currentMonth = new Date().getMonth() + 1;
+  const currentYear = new Date().getFullYear();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editCarryover, setEditCarryover] = useState<any>(null);
   const [editAmount, setEditAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth.toString());
+  const [selectedMonth, setSelectedMonth] = useState<string>(
+    year === currentYear ? currentMonth.toString() : "all"
+  );
+
+  // Reset month filter when year changes
+  useEffect(() => {
+    if (year === currentYear) {
+      setSelectedMonth(currentMonth.toString());
+    } else {
+      setSelectedMonth("all");
+    }
+  }, [year, currentYear, currentMonth]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-IN", {

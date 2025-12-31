@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -40,8 +40,21 @@ const MONTHS = [
 
 const SpendingChart = ({ expenses, categories, subCategories, year }: SpendingChartProps) => {
   const currentMonth = new Date().getMonth() + 1;
-  const [selectedMonth, setSelectedMonth] = useState(currentMonth.toString());
+  const currentYear = new Date().getFullYear();
+  const [selectedMonth, setSelectedMonth] = useState(
+    year === currentYear ? currentMonth.toString() : "all"
+  );
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+
+  // Reset month filter when year changes
+  useEffect(() => {
+    if (year === currentYear) {
+      setSelectedMonth(currentMonth.toString());
+    } else {
+      setSelectedMonth("all");
+    }
+    setSelectedCategory("all");
+  }, [year, currentYear, currentMonth]);
 
   const getChartData = () => {
     let filteredExpenses = expenses;

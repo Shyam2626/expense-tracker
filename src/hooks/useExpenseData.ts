@@ -116,14 +116,16 @@ export const useExpenseData = (year: number, userId: string | undefined) => {
     enabled: !!userId,
   });
 
-  const refetch = () => {
-    refetchIncome();
-    refetchSalaries();
-    refetchExpenses();
-    refetchCategories();
-    refetchSubCategories();
-    refetchIncomeCategories();
-    refetchCarryovers();
+  const refetch = async () => {
+    await Promise.all([
+      refetchIncome(),
+      refetchSalaries(),
+      refetchExpenses(),
+      refetchCategories(),
+      refetchSubCategories(),
+      refetchIncomeCategories(),
+      refetchCarryovers(),
+    ]);
   };
 
   const isLoading = !userId;
