@@ -201,40 +201,45 @@ const HabitAnalytics = ({
             <CardTitle>Completion Rate by Habit</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={categoryStats}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="name"
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                />
-                <YAxis />
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      const data = payload[0].payload;
-                      return (
-                        <div className="bg-card border rounded-lg p-3 shadow-lg">
-                          <p className="font-semibold">{data.name}</p>
-                          <p className="text-sm">
-                            Completed: {data.completed}/{data.total}
-                          </p>
-                          <p className="text-sm">Rate: {data.rate}%</p>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Bar dataKey="rate" radius={[8, 8, 0, 0]}>
-                  {categoryStats.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="overflow-auto" style={{ maxHeight: "600px" }}>
+              <ResponsiveContainer 
+                width="100%" 
+                height={Math.max(400, categoryStats.length * 60)}
+              >
+                <BarChart data={categoryStats} layout="vertical" margin={{ left: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" domain={[0, 100]} />
+                  <YAxis 
+                    type="category" 
+                    dataKey="name" 
+                    width={150}
+                    tick={{ fontSize: 13 }}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-card border rounded-lg p-3 shadow-lg">
+                            <p className="font-semibold">{data.name}</p>
+                            <p className="text-sm">
+                              Completed: {data.completed}/{data.total}
+                            </p>
+                            <p className="text-sm">Rate: {data.rate}%</p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Bar dataKey="rate" radius={[0, 8, 8, 0]}>
+                    {categoryStats.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
@@ -284,34 +289,44 @@ const HabitAnalytics = ({
             <CardTitle>Best Streaks</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={streakData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={100} />
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      const data = payload[0].payload;
-                      return (
-                        <div className="bg-card border rounded-lg p-3 shadow-lg">
-                          <p className="font-semibold">{data.name}</p>
-                          <p className="text-sm">
-                            Best Streak: {data.streak} days
-                          </p>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Bar dataKey="streak" radius={[0, 8, 8, 0]}>
-                  {streakData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="overflow-auto" style={{ maxHeight: "600px" }}>
+              <ResponsiveContainer 
+                width="100%" 
+                height={Math.max(400, streakData.length * 60)}
+              >
+                <BarChart data={streakData} layout="vertical" margin={{ left: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" />
+                  <YAxis 
+                    dataKey="name" 
+                    type="category" 
+                    width={150}
+                    tick={{ fontSize: 13 }}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        return (
+                          <div className="bg-card border rounded-lg p-3 shadow-lg">
+                            <p className="font-semibold">{data.name}</p>
+                            <p className="text-sm">
+                              Best Streak: {data.streak} days
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Bar dataKey="streak" radius={[0, 8, 8, 0]}>
+                    {streakData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
@@ -321,17 +336,19 @@ const HabitAnalytics = ({
             <CardTitle>Habit Completion Distribution</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={400}>
               <PieChart>
                 <Pie
                   data={categoryStats}
                   cx="50%"
                   cy="50%"
-                  labelLine={false}
-                  label={({ name, rate }) => `${name}: ${rate}%`}
-                  outerRadius={80}
+                  labelLine={true}
+                  label={({ rate }) => `${rate}%`}
+                  outerRadius={100}
+                  innerRadius={60}
                   fill="#8884d8"
                   dataKey="completed"
+                  paddingAngle={2}
                 >
                   {categoryStats.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -353,6 +370,11 @@ const HabitAnalytics = ({
                     }
                     return null;
                   }}
+                />
+                <Legend 
+                  verticalAlign="bottom" 
+                  height={36}
+                  formatter={(value, entry: any) => entry.payload.name}
                 />
               </PieChart>
             </ResponsiveContainer>

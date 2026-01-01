@@ -7,6 +7,7 @@ import { useHabitData } from "@/hooks/useHabitData";
 import HabitCategoryManager from "@/components/habits/HabitCategoryManager";
 import MonthlyHabitGrid from "@/components/habits/MonthlyHabitGrid";
 import HabitAnalytics from "@/components/habits/HabitAnalytics";
+import DailyNotes from "@/components/habits/DailyNotes";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -157,10 +158,11 @@ const HabitTracker = () => {
           </div>
         )}
 
-        {/* Tabs for Monthly View and Analytics */}
+        {/* Tabs for Monthly View, Daily Notes, and Analytics */}
         <Tabs defaultValue="monthly" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3">
             <TabsTrigger value="monthly">Monthly View</TabsTrigger>
+            <TabsTrigger value="notes">Daily Notes</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
@@ -173,6 +175,15 @@ const HabitTracker = () => {
               userId={user.id}
               onSuccess={refetch}
               isLoading={isLoading}
+            />
+          </TabsContent>
+
+          <TabsContent value="notes" className="mt-6">
+            <DailyNotes
+              userId={user.id}
+              year={selectedYear}
+              month={selectedMonth}
+              onSuccess={refetch}
             />
           </TabsContent>
 
